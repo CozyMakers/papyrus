@@ -22,6 +22,30 @@ final class APIMacroTests: XCTestCase {
         }
     }
 
+    func testMultipleHTTPMethodsNotAllowed() {
+        assertMacro(["API": APIMacro.self]) {
+            """
+            @API
+            protocol Foo {
+                @GET("/bar")
+                @POST("/bar")
+                func bar() async throws
+            }
+            """
+        } diagnostics: {
+            """
+            @API
+            ┬───
+            ╰─ 🛑 Multiple HTTP methods are not allowed
+            protocol Foo {
+                @GET("/bar")
+                @POST("/bar")
+                func bar() async throws
+            }
+            """
+        }
+    }
+
     func testVoidReturn() {
         assertMacro(["API": APIMacro.self]) {
             """

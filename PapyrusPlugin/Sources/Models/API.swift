@@ -90,6 +90,9 @@ extension API {
 
             let name = attribute.name
             guard name == "HTTP" || httpMethods.contains(name) else { continue }
+            guard method == nil else {
+                throw PapyrusPluginError("Multiple HTTP methods are not allowed")
+            }
 
             if name == "HTTP" {
                 method = list.first?.expression.description.withoutQuotes
