@@ -33,8 +33,7 @@ extension API {
             for endpoint in endpoints {
                 endpoint.liveFunction()
                     .access(access)
-                    .discardableResult(endpoint.discardableResult)
-                    .available(endpoint.availableAttribute)
+                    .attributes(endpoint.preservedAttributes)
             }
 
             // 2. builder used by all live endpoint functions

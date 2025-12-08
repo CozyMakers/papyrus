@@ -85,23 +85,13 @@ struct Declaration: ExpressibleByStringLiteral, Sendable {
 
     // MARK: Attributes
 
-    func discardableResult(_ shouldAdd: Bool) -> Declaration {
-        guard shouldAdd else {
+    func attributes(_ attrs: [String]) -> Declaration {
+        guard !attrs.isEmpty else {
             return self
         }
 
         var copy = self
-        copy.text = "@discardableResult \(text)"
-        return copy
-    }
-
-    func available(_ attribute: String?) -> Declaration {
-        guard let attribute else {
-            return self
-        }
-
-        var copy = self
-        copy.text = "\(attribute) \(text)"
+        copy.text = attrs.joined(separator: " ") + " " + text
         return copy
     }
 

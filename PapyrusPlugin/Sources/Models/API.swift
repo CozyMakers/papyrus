@@ -12,11 +12,14 @@ struct API {
         let name: String
         let parameters: [EndpointParameter]
         let responseType: String?
-        /// Whether the function has @discardableResult attribute
-        let discardableResult: Bool
-        /// The @available attribute if present (e.g. "@available(iOS 15.0, *)")
-        let availableAttribute: String?
+        /// Swift attributes to preserve on the generated function (e.g. @discardableResult, @available, @MainActor)
+        let preservedAttributes: [String]
     }
+
+    static let httpMethods: Set<String> = [
+        "GET", "DELETE", "PATCH", "POST", "PUT",
+        "OPTIONS", "HEAD", "TRACE", "CONNECT", "HTTP"
+    ]
 
     /// The name of the protocol defining the API.
     let name: String
@@ -57,8 +60,12 @@ extension API {
         }
 
         let (method, path, pathParameters) = try parseMethodAndPath(function)
-        let hasDiscardableResult = function.functionAttributes.contains { $0.name == "discardableResult" }
-        let availableAttribute = function.functionAttributes.first { $0.name == "available" }?.trimmedDescription
+        let preservedAttributes = function.functionAttributes
+            .filter { attr in
+                guard EndpointAttribute(attr) == nil else { return false }
+                return !httpMethods.contains(attr.name)
+            }
+            .map { $0.trimmedDescription }
 
         return API.Endpoint(
             attributes: function.functionAttributes.compactMap { EndpointAttribute($0) },
@@ -70,8 +77,7 @@ extension API {
                 EndpointParameter($0, httpMethod: method, pathParameters: pathParameters)
             }.validated(),
             responseType: function.returnType,
-            discardableResult: hasDiscardableResult,
-            availableAttribute: availableAttribute
+            preservedAttributes: preservedAttributes
         )
     }
 
@@ -80,18 +86,17 @@ extension API {
     ) throws -> (method: String, path: String, pathParameters: [String]) {
         var method, path: String?
         for attribute in function.functionAttributes {
-            if case let .argumentList(list) = attribute.arguments {
-                let name = attribute.attributeName.trimmedDescription
-                switch name {
-                case "GET", "DELETE", "PATCH", "POST", "PUT", "OPTIONS", "HEAD", "TRACE", "CONNECT":
-                    method = name
-                    path = list.first?.expression.description.withoutQuotes
-                case "HTTP":
-                    method = list.first?.expression.description.withoutQuotes
-                    path = list.dropFirst().first?.expression.description.withoutQuotes
-                default:
-                    continue
-                }
+            guard case let .argumentList(list) = attribute.arguments else { continue }
+
+            let name = attribute.name
+            guard name == "HTTP" || httpMethods.contains(name) else { continue }
+
+            if name == "HTTP" {
+                method = list.first?.expression.description.withoutQuotes
+                path = list.dropFirst().first?.expression.description.withoutQuotes
+            } else {
+                method = name
+                path = list.first?.expression.description.withoutQuotes
             }
         }
 
