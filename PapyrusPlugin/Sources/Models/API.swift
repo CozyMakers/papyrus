@@ -14,6 +14,8 @@ struct API {
         let responseType: String?
         /// Whether the function has @discardableResult attribute
         let discardableResult: Bool
+        /// The @available attribute if present (e.g. "@available(iOS 15.0, *)")
+        let availableAttribute: String?
     }
 
     /// The name of the protocol defining the API.
@@ -56,6 +58,7 @@ extension API {
 
         let (method, path, pathParameters) = try parseMethodAndPath(function)
         let hasDiscardableResult = function.functionAttributes.contains { $0.name == "discardableResult" }
+        let availableAttribute = function.functionAttributes.first { $0.name == "available" }?.trimmedDescription
 
         return API.Endpoint(
             attributes: function.functionAttributes.compactMap { EndpointAttribute($0) },
@@ -67,7 +70,8 @@ extension API {
                 EndpointParameter($0, httpMethod: method, pathParameters: pathParameters)
             }.validated(),
             responseType: function.returnType,
-            discardableResult: hasDiscardableResult
+            discardableResult: hasDiscardableResult,
+            availableAttribute: availableAttribute
         )
     }
 

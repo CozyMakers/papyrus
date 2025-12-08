@@ -95,6 +95,16 @@ struct Declaration: ExpressibleByStringLiteral, Sendable {
         return copy
     }
 
+    func available(_ attribute: String?) -> Declaration {
+        guard let attribute else {
+            return self
+        }
+
+        var copy = self
+        copy.text = "\(attribute) \(text)"
+        return copy
+    }
+
     // MARK: SwiftSyntax conversion
 
     func declSyntax() -> DeclSyntax {
