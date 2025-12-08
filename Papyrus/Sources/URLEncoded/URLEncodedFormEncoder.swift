@@ -311,7 +311,7 @@ extension _URLEncodedFormEncoder: SingleValueEncodingContainer {
     func encode(_ value: UInt64) throws { self.encodeResult(value) }
 
     func encode<T: Encodable>(_ value: T) throws {
-        try value.encode(to: self)
+        self.encodeResult(try box(value))
     }
 
     func singleValueContainer() -> any SingleValueEncodingContainer {

@@ -54,16 +54,19 @@ public struct RequestBuilder {
     }
 
     public struct ContentValue: Encodable {
-        private let _encode: (any Encoder) throws -> Void
+        private let _encode: (inout any SingleValueEncodingContainer) throws -> Void
 
         public init<T: Encodable>(_ wrapped: T) {
-            _encode = wrapped.encode
+            _encode = { container in
+                try container.encode(wrapped)
+            }
         }
 
         // MARK: Encodable
 
         public func encode(to encoder: any Encoder) throws {
-            try _encode(encoder)
+            var container = encoder.singleValueContainer()
+            try _encode(&container)
         }
     }
 
